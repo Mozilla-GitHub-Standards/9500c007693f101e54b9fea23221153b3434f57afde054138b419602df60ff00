@@ -68,6 +68,7 @@ class TCTalker(object):
 
         self.options = o
         self.queue = taskcluster.Queue(self.options)
+        log.debug("Dict of options: %s", self.options)
 
     def _get_job_status(self, task_id):
         """Private quick method to retrieve json describing the job"""
@@ -76,12 +77,14 @@ class TCTalker(object):
     def _get_last_run_id(self, task_id):
         """Private quick method to retrieve the last run_id for a job"""
         curr_status = self._get_job_status(task_id)
+        log.debug("Current job status: %s", curr_status)
         return curr_status['status']['runs'][-1]['runId']
 
     def _claim_task(self, task_id):
         """Method to call whenever a task operation needs claiming first"""
         curr_status = self._get_job_status(task_id)
         run_id = curr_status['status']['runs'][-1]['runId']
+        log.debug("Current job status: %s", curr_status)
         log.debug("Run id is %s", run_id)
         payload = {
             "workerGroup": curr_status['status']['workerType'],
@@ -111,31 +114,30 @@ def main():
                         help="action to be performed")
     parser.add_argument("taskIds", metavar="$taskId1 $taskId2 ....",
                         nargs="+", help="task ids to be processed")
-    parser.add_argument("--conf", metavar="json-config-file", dest="config_file",
+    parser.add_argument("--conf", metavar="json-conf-file", dest="config_file",
                         help="Config file containing login information for TC")
-    parser.add_argument("--verbose", help="Increase output verbosity",
-                        action="store_true")
+    parser.add_argument("-v", "--verbose", action="store_const",
+                        dest="loglevel", const=logging.DEBUG,
+                        default=logging.INFO,
+                        help="Increase output verbosity")
     args = parser.parse_args()
 
-    if args.verbose:
-        loglevel = logging.DEBUG
-    else:
-        loglevel = logging.INFO
-
     FORMAT = "(tctalker) - %(levelname)s - %(message)s"
-    logging.basicConfig(format=FORMAT, level=loglevel)
-    logging.getLogger(__name__).setLevel(logging.WARN)
+    logging.basicConfig(format=FORMAT, level=args.loglevel)
 
     action, task_ids = args.action, args.taskIds
     taskcluster_config = None
-    if hasattr(args, 'config_file') and args.config_file:
+    if args.config_file:
+        log.info("Attempt to read configs from json config file...")
         taskcluster_config = _load_json(args.config_file)
 
+    log.info("Wrapping up a TCTalker object to apply <%s> action", action)
     tct = TCTalker(taskcluster_config)
     func = getattr(tct, action)
     for _id in task_ids:
+        log.info("Run %s action for %s taskId...", action, _id)
         ret = func(_id)
-        log.info("Status returned for %s is %s", _id, str(ret))
+        log.info("Status returned for %s: %s", _id, ret)
 
 
 if __name__ == "__main__":
