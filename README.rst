@@ -1,4 +1,4 @@
-Script is to be used to perform various operations against Taskcluster API.
+Perform operations against Taskcluster API.
 ===========================================================================
 
 Installation
@@ -21,7 +21,7 @@ Usage
 
 Usage example following Pypi installation:
 
-- ``tctalker --verbose --conf config.json report_completed *$taskid1* *$taskid2* [...]``
-- ``tctalker --conf config.json cancel *$taskid3*``
-- ``tctalker rerun *$taskid4*`` *(assuming env vars coexist)*
+- ``tctalker --verbose --conf config.json report_completed $taskid1 $taskid2 [...]``
+- ``tctalker --conf config.json cancel $taskid3``
+- ``tctalker rerun $taskid4`` *(assuming env vars coexist)*
 
