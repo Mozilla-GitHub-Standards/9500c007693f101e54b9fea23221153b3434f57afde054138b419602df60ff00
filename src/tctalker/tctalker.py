@@ -103,6 +103,7 @@ class TCTalker(object):
 
     def report_completed(self, task_id):
         """Map http://docs.taskcluster.net/queue/api-docs/#reportCompleted"""
+        self._claim_task(task_id)
         run_id = self._get_last_run_id(task_id)
         return self.queue.reportCompleted(task_id, run_id)
 
