@@ -9,7 +9,7 @@ here = path.abspath(path.dirname(__file__))
 
 setup(
     name='tctalker',
-    version='0.0.5',
+    version='0.0.6',
     description='Script to perform various ops against TC API',
     url='https://github.com/MihaiTabara/tctalker',
     author='Mihai Tabara',
