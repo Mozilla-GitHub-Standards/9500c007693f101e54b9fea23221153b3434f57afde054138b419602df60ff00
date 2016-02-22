@@ -68,6 +68,7 @@ class TCTalker(object):
 
         self.options = o
         self.queue = taskcluster.Queue(self.options)
+        self.scheduler = taskcluster.Scheduler(self.options)
         log.debug("Dict of options: %s", self.options)
 
     def _get_job_status(self, task_id):
@@ -93,6 +94,10 @@ class TCTalker(object):
         self.queue.claimTask(task_id, run_id, payload)
         return run_id
 
+    def status(self, task_id):
+        """Map over http://docs.taskcluster.net/queue/api-docs/#status"""
+        return self.queue.status(task_id)
+
     def cancel(self, task_id):
         """Map over http://docs.taskcluster.net/queue/api-docs/#cancelTask"""
         return self.queue.cancelTask(task_id)
@@ -107,11 +112,22 @@ class TCTalker(object):
         run_id = self._get_last_run_id(task_id)
         return self.queue.reportCompleted(task_id, run_id)
 
+    def cancel_graph(self, task_graph_id):
+        """ Walk the graph and cancel all pending/running tasks """
+        graph = self.scheduler.inspect(task_graph_id)
+        log.debug("Current graph information %s", graph)
+        tasks = graph.get('tasks', [])
+
+        for task in tasks:
+            task_id = task.get('taskId')
+            log.debug("Canceling taskId %s", task_id)
+            self.cancel(task.get('taskId'))
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("action", choices=["cancel", "rerun",
-                                           "report_completed"],
+                                           "report_completed", "cancel_graph"],
                         help="action to be performed")
     parser.add_argument("taskIds", metavar="$taskId1 $taskId2 ....",
                         nargs="+", help="task ids to be processed")
