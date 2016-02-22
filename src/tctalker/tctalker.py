@@ -121,7 +121,10 @@ class TCTalker(object):
         for task in tasks:
             task_id = task.get('taskId')
             log.debug("Canceling taskId %s", task_id)
-            self.cancel(task.get('taskId'))
+            try:
+                self.cancel(task.get('taskId'))
+            except Exception:
+                log.exception("Failed to cancel the task %s", task_id)
 
 
 def main():
