@@ -4,7 +4,7 @@ Perform operations against Taskcluster API.
 Installation
 ------------
 
-- ``virtual venv``
+- ``virtualenv venv``
 - ``source venv/bin/activate``
 - ``pip install tctalker``
 
