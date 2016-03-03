@@ -40,6 +40,9 @@ class TCTalker(object):
     """The base TCTalker class"""
 
     def __init__(self, options):
+        cert = options["credentials"].get("certificate")
+        if cert and not isinstance(cert, basestring):
+            options["credentials"]["certificate"] = json.dumps(cert)
         self.queue = taskcluster.Queue(options)
         self.scheduler = taskcluster.Scheduler(options)
         log.debug("Dict of options: %s", options)
