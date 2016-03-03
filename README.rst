@@ -11,7 +11,7 @@ Installation
 Configs specification
 ---------------------
 
-Configs can served via json config file (check config.json.sample included within this repo)
+Configs can be served via json config file (check config.json.sample included within this repo)
 
 Usage
 -----
