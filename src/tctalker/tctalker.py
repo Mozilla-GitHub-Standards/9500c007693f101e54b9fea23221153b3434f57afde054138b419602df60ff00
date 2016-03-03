@@ -28,18 +28,12 @@ This script is to be used to perform various operations against Taskcluster API
 (e.g. rerun, cancel, reportCompleted)
 """
 
-import os
 import json
 import logging
 import argparse
 import taskcluster
 
 log = logging.getLogger(__name__)
-
-
-def _load_json(name):
-    with open(os.path.join(os.path.dirname(__file__), name), "rb") as f:
-        return json.load(f)
 
 
 class TCTalker(object):
@@ -115,7 +109,7 @@ def main():
                         nargs="+", help="task ids to be processed")
     parser.add_argument("--conf", metavar="json-conf-file", dest="config_file",
                         help="Config file containing login information for TC",
-                        required=True)
+                        required=True, type=argparse.FileType('r'))
     parser.add_argument("-v", "--verbose", action="store_const",
                         dest="loglevel", const=logging.DEBUG,
                         default=logging.INFO,
@@ -129,7 +123,7 @@ def main():
     taskcluster_config = None
     if args.config_file:
         log.info("Attempt to read configs from json config file...")
-        taskcluster_config = _load_json(args.config_file)
+        taskcluster_config = json.load(args.config_file)
 
     log.info("Wrapping up a TCTalker object to apply <%s> action", action)
     tct = TCTalker(taskcluster_config)
