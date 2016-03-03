@@ -11,10 +11,7 @@ Installation
 Configs specification
 ---------------------
 
-Configs can be served in two ways:
-
-- *via json config file* (check config.json.sample included within this repo)
-- *via env vars*: **TASKCLUSTER_CLIENT_ID**, **TASKCLUSTER_ACCESS_TOKEN**, **TASKCLUSTER_CERTIFICATE**
+Configs can served via json config file (check config.json.sample included within this repo)
 
 Usage
 -----
@@ -23,5 +20,5 @@ Usage example following Pypi installation:
 
 - ``tctalker --verbose --conf config.json report_completed $taskid1 $taskid2 [...]``
 - ``tctalker --conf config.json cancel $taskid3``
-- ``tctalker rerun $taskid4`` *(assuming env vars coexist)*
+- ``tctalker --conf rerun $taskid4``
 

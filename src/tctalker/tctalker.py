@@ -34,16 +34,6 @@ import logging
 import argparse
 import taskcluster
 
-# Default configuration
-_defaultConfig = {
-    'credentials': {
-        'clientId': os.environ.get('TASKCLUSTER_CLIENT_ID'),
-        'accessToken': os.environ.get('TASKCLUSTER_ACCESS_TOKEN'),
-        'certificate': os.environ.get('TASKCLUSTER_CERTIFICATE'),
-    },
-}
-
-
 log = logging.getLogger(__name__)
 
 
@@ -55,21 +45,10 @@ def _load_json(name):
 class TCTalker(object):
     """The base TCTalker class"""
 
-    def __init__(self, options=None):
-        o = dict()
-        o.update(_defaultConfig)
-        if options:
-            o.update(options)
-        certificate = o['credentials']['certificate']
-        try:
-            json.loads(certificate)
-        except TypeError:
-            o['credentials']['certificate'] = json.dumps(certificate)
-
-        self.options = o
-        self.queue = taskcluster.Queue(self.options)
-        self.scheduler = taskcluster.Scheduler(self.options)
-        log.debug("Dict of options: %s", self.options)
+    def __init__(self, options):
+        self.queue = taskcluster.Queue(options)
+        self.scheduler = taskcluster.Scheduler(options)
+        log.debug("Dict of options: %s", options)
 
     def _get_job_status(self, task_id):
         """Private quick method to retrieve json describing the job"""
@@ -135,7 +114,8 @@ def main():
     parser.add_argument("taskIds", metavar="$taskId1 $taskId2 ....",
                         nargs="+", help="task ids to be processed")
     parser.add_argument("--conf", metavar="json-conf-file", dest="config_file",
-                        help="Config file containing login information for TC")
+                        help="Config file containing login information for TC",
+                        required=True)
     parser.add_argument("-v", "--verbose", action="store_const",
                         dest="loglevel", const=logging.DEBUG,
                         default=logging.INFO,
