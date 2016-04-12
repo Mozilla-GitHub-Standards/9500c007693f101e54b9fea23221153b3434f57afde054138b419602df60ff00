@@ -3,13 +3,10 @@ Script to perform various ops against TC API
 """
 
 from setuptools import setup, find_packages
-from os import path
-
-here = path.abspath(path.dirname(__file__))
 
 setup(
     name='tctalker',
-    version='0.0.7',
+    version='0.1.0',
     description='Script to perform various ops against TC API',
     url='https://github.com/MihaiTabara/tctalker',
     author='Mihai Tabara',

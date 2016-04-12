@@ -31,7 +31,8 @@ This script is to be used to perform various operations against Taskcluster API
 import json
 import logging
 import argparse
-import taskcluster
+import asyncio
+from taskcluster.async import Queue, Scheduler
 
 log = logging.getLogger(__name__)
 
@@ -41,25 +42,21 @@ class TCTalker(object):
 
     def __init__(self, options):
         cert = options["credentials"].get("certificate")
-        if cert and not isinstance(cert, basestring):
+        if cert:
             options["credentials"]["certificate"] = json.dumps(cert)
-        self.queue = taskcluster.Queue(options)
-        self.scheduler = taskcluster.Scheduler(options)
+        self.queue = Queue(options)
+        self.scheduler = Scheduler(options)
         log.debug("Dict of options: %s", options)
 
-    def _get_job_status(self, task_id):
-        """Private quick method to retrieve json describing the job"""
-        return self.queue.status(task_id)
-
-    def _get_last_run_id(self, task_id):
+    async def _get_last_run_id(self, task_id):
         """Private quick method to retrieve the last run_id for a job"""
-        curr_status = self._get_job_status(task_id)
+        curr_status = await self.queue.status(task_id)
         log.debug("Current job status: %s", curr_status)
         return curr_status['status']['runs'][-1]['runId']
 
-    def _claim_task(self, task_id):
+    async def _claim_task(self, task_id):
         """Method to call whenever a task operation needs claiming first"""
-        curr_status = self._get_job_status(task_id)
+        curr_status = await self.queue.status(task_id)
         run_id = curr_status['status']['runs'][-1]['runId']
         log.debug("Current job status: %s", curr_status)
         log.debug("Run id is %s", run_id)
@@ -67,45 +64,43 @@ class TCTalker(object):
             "workerGroup": curr_status['status']['workerType'],
             "workerId": "TCTalker",
         }
-        self.queue.claimTask(task_id, run_id, payload)
+        await self.queue.claimTask(task_id, run_id, payload)
         return run_id
 
-    def status(self, task_id):
+    async def status(self, task_id):
         """Map over http://docs.taskcluster.net/queue/api-docs/#status"""
-        return self.queue.status(task_id)
+        return await self.queue.status(task_id)
 
-    def cancel(self, task_id):
+    async def cancel(self, task_id):
         """Map over http://docs.taskcluster.net/queue/api-docs/#cancelTask"""
-        return self.queue.cancelTask(task_id)
+        log.info("Cancelling %s...", task_id)
+        res = await self.queue.cancelTask(task_id)
+        log.info("Cancelled %s", task_id)
+        return res
 
-    def rerun(self, task_id):
+    async def rerun(self, task_id):
         """Map over http://docs.taskcluster.net/queue/api-docs/#rerunTask"""
-        return self.queue.rerunTask(task_id)
+        log.info("Rerunning %s...", task_id)
+        return await self.queue.rerunTask(task_id)
 
-    def report_completed(self, task_id):
+    async def report_completed(self, task_id):
         """Map http://docs.taskcluster.net/queue/api-docs/#reportCompleted"""
-        self._claim_task(task_id)
-        run_id = self._get_last_run_id(task_id)
-        return self.queue.reportCompleted(task_id, run_id)
+        log.info("Resolving %s...", task_id)
+        await self._claim_task(task_id)
+        run_id = await self._get_last_run_id(task_id)
+        return await self.queue.reportCompleted(task_id, run_id)
 
-    def cancel_graph(self, task_graph_id):
+    async def cancel_graph(self, task_graph_id):
         """ Walk the graph and cancel all pending/running tasks """
-        graph = self.scheduler.inspect(task_graph_id)
+        graph = await self.scheduler.inspect(task_graph_id)
         log.debug("Current graph information %s", graph)
         tasks = graph.get('tasks', [])
-
-        for task in tasks:
-            task_id = task.get('taskId')
-            log.debug("Canceling taskId %s", task_id)
-            try:
-                self.cancel(task.get('taskId'))
-            except Exception:
-                log.exception("Failed to cancel the task %s", task_id)
+        return await asyncio.wait([self.cancel(t["taskId"]) for t in tasks])
 
 
-def main():
+async def async_main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=["status", "cancel", "rerun",
+    parser.add_argument("action", choices=["cancel", "rerun", "status",
                                            "report_completed", "cancel_graph"],
                         help="action to be performed")
     parser.add_argument("taskIds", metavar="$taskId1 $taskId2 ....",
@@ -119,8 +114,8 @@ def main():
                         help="Increase output verbosity")
     args = parser.parse_args()
 
-    FORMAT = "(tctalker) - %(levelname)s - %(message)s"
-    logging.basicConfig(format=FORMAT, level=args.loglevel)
+    logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s",
+                        level=args.loglevel)
 
     action, task_ids = args.action, args.taskIds
     taskcluster_config = None
@@ -133,9 +128,12 @@ def main():
     func = getattr(tct, action)
     for _id in task_ids:
         log.info("Run %s action for %s taskId...", action, _id)
-        ret = func(_id)
-        log.info("Status returned for %s: %s", _id, ret)
+        ret = await func(_id)
+        log.debug("Status returned for %s: %s", _id, ret)
 
+
+def main():
+    asyncio.get_event_loop().run_until_complete(async_main())
 
 if __name__ == "__main__":
     main()
