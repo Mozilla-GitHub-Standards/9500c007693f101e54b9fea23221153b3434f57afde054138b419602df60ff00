@@ -4,7 +4,7 @@ tctalker.py
 usage: tctalker.py [-h]
                    [--conf json-config-file]
                    [--verbose]
-                   {cancel,rerun,report_completed} $taskId1 $taskId2
+                   {status,cancel,rerun,report_completed} $taskId1 $taskId2
 
 config-file must be a JSON object following this structure:
 {
@@ -105,7 +105,7 @@ class TCTalker(object):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=["cancel", "rerun",
+    parser.add_argument("action", choices=["status", "cancel", "rerun",
                                            "report_completed", "cancel_graph"],
                         help="action to be performed")
     parser.add_argument("taskIds", metavar="$taskId1 $taskId2 ....",
