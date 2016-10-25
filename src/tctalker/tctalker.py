@@ -4,7 +4,7 @@ tctalker.py
 usage: tctalker.py [-h]
                    [--conf json-config-file]
                    [--verbose]
-                   {status,cancel,rerun,report_completed} $taskId1 $taskId2
+                   {status,cancel,rerun,report_completed|resolve} $taskId1 $taskId2
 
 config-file must be a JSON object following this structure:
 {
@@ -97,11 +97,13 @@ class TCTalker(object):
         tasks = graph.get('tasks', [])
         return await asyncio.wait([self.cancel(t["taskId"]) for t in tasks])
 
+    resolve = report_completed
 
 async def async_main():
     parser = argparse.ArgumentParser()
     parser.add_argument("action", choices=["cancel", "rerun", "status",
-                                           "report_completed", "cancel_graph"],
+                                           "report_completed", "resolve",
+                                           "cancel_graph"],
                         help="action to be performed")
     parser.add_argument("taskIds", metavar="$taskId1 $taskId2 ....",
                         nargs="+", help="task ids to be processed")
