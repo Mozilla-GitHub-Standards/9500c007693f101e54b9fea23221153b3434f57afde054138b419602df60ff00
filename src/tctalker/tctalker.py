@@ -11,21 +11,11 @@ config-file must be a JSON object following this structure:
     "credentials": {
         "clientId": "...",
         "accessToken": "...",
-        "certificate": {
-            "version": 1,
-            "scopes": ["...",
-                       "...."
-                       "...."],
-            "start": 1448386098347,
-            "expiry": 1448646198347,
-            "seed": "...",
-            "signature":"..."
-        }
     }
 }
 
 This script is to be used to perform various operations against Taskcluster API
-(e.g. rerun, cancel, reportCompleted)
+(e.g. rerun, cancel, resolve)
 """
 
 import json
