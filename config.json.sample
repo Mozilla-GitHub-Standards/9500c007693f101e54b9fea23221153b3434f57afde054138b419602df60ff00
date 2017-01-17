@@ -1,15 +1,6 @@
 {
     "credentials": {
         "clientId": "tc-login",
-        "accessToken": "....",
-        "certificate": {
-            "version": 1,
-            "scopes": ["....",
-                       "...."],
-            "start": ...,
-            "expiry": ....,
-            "seed": "...",
-            "signature": "...."
-        }
+        "accessToken": "...."
     }
 }
