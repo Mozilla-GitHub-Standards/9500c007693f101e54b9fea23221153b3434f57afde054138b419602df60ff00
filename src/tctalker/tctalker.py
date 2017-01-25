@@ -87,6 +87,10 @@ class TCTalker(object):
         tasks = graph.get('tasks', [])
         return await asyncio.wait([self.cancel(t["taskId"]) for t in tasks])
 
+    def close(self):
+        self.queue.session.close()
+        self.scheduler.session.close()
+
     resolve = report_completed
 
 async def async_main():
@@ -122,6 +126,7 @@ async def async_main():
         log.info("Run %s action for %s taskId...", action, _id)
         ret = await func(_id)
         log.debug("Status returned for %s: %s", _id, ret)
+    tct.close()
 
 
 def main():
