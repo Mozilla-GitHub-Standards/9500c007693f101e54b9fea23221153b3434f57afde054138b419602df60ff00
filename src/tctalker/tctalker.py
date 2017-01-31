@@ -18,10 +18,11 @@ This script is to be used to perform various operations against Taskcluster API
 (e.g. rerun, cancel, resolve)
 """
 
-import json
-import logging
 import argparse
 import asyncio
+import json
+import logging
+import pprint
 from taskcluster.async import Queue, Scheduler
 
 log = logging.getLogger(__name__)
@@ -114,6 +115,13 @@ async def async_main():
                         level=args.loglevel)
 
     action, task_ids = args.action, args.taskIds
+
+    # log.info if our action is `status`
+    # https://github.com/mozilla/tctalker/issues/13
+    status_log_level = logging.DEBUG
+    if action == 'status':
+        status_log_level = logging.INFO
+
     taskcluster_config = None
     if args.config_file:
         log.info("Attempt to read configs from json config file...")
@@ -125,7 +133,7 @@ async def async_main():
     for _id in task_ids:
         log.info("Run %s action for %s taskId...", action, _id)
         ret = await func(_id)
-        log.debug("Status returned for %s: %s", _id, ret)
+        log.log(status_log_level, "Status returned for %s:\n%s", _id, pprint.pformat(ret))
     tct.close()
 
 
